@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Transitions</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+    }
+
+    #mapOverlay {
+        position: absolute;
+        pointer-events: none;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+        background-color: #fff;
+        opacity: 1;
+        transition: all 1s linear;
+    }
+
+    #mapFade {
+        position: relative;
+        top: 60px;
+        font-size: 16px;
+        padding: 15px 40px;
+        z-index: 10;
+        margin: 0 auto;
+        display: block;
+        transition: all 0.5s linear;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    #mapFade:hover {
+        cursor: pointer;
+    }
+</style>
+</head>
+
+<body>
+<div id="map"></div>
+<div id="mapOverlay"></div>
+<button id="mapFade">Fade out</button>
+<script>
+let initLoad = true;
+const mapFadeBtn = document.getElementById('mapFade');
+const layerArray = [
+    1,
+    2,
+    3,
+    4,
+    5,
+    5.5,
+    6,
+    6.5,
+    7,
+    7.2,
+    7.6,
+    7.7,
+    7.8,
+    8,
+    8.5,
+    9,
+    9.5,
+    9.6,
+    10,
+    10.2,
+    10.5,
+    11,
+    11.5,
+    12,
+    12.5,
+    13,
+    13.5,
+    14,
+    14.5,
+    15,
+    15.5,
+    16,
+    16.5,
+    17,
+    17.5,
+    18
+];
+
+
+
+mapboxgl.accessToken =
+    'pk.eyJ1Ijoid2lsbGlhbS1kYXZpcyIsImEiOiJja2tiYWtvbWcwMmtzMnBvajh3M2kxZGRuIn0.GeROaHKn2Gbvsg1e8buJEw';
+const map = new mapboxgl.Map({
+    container: 'map', // container ID
+    style: 'mapbox://styles/william-davis/cl7hypgg0002e14oflhivjeoa?fresh=true', // style URL
+    center: [-90, 58], // starting position [lng, lat]
+    zoom: 3.8, // starting zoom
+    projection: 'globe', // display the map as a 3D globe
+    interactive: false
+});
+
+map.on('style.load', () => {
+
+    for (i = 0; i < layerArray.length; i++) {
+        const layerId = 'glacial-retreat-' + layerArray[i];
+        const transitionDuration = {
+            duration: 1000,
+            delay: 1000
+        };
+        map.setPaintProperty(layerId, 'fill-opacity-transition', transitionDuration);
+    }
+});
+
+map.on('load', () => {
+    document.getElementById('mapOverlay').style.opacity = 0;
+    updateLayer(0.1, true);
+    mapFadeBtn.addEventListener("click", (e) => {
+        const currentOpacity = map.getPaintProperty('glacial-retreat-18', 'fill-opacity');
+        if (currentOpacity > 0) {
+            updateLayer(0, false);
+        } else {
+            updateLayer(0.1, true);
+        }
+    });
+});
+
+function updateLayer(layerOpacity, reveal) {
+    let timer = 0;
+    mapFadeBtn.style.pointerEvents = 'none';
+    mapFadeBtn.style.color = 'rgba(0,0,0,0.5)';
+
+    if (reveal) {
+        map.flyTo({
+            zoom: 3.3,
+            center: [-90, 56],
+            bearing: 0,
+            pitch: 45,
+            duration: 5000
+        }).once('moveend', () => {
+            mapFadeBtn.innerHTML = 'Fade out';
+            mapFadeBtn.style.pointerEvents = 'inherit';
+            mapFadeBtn.style.color = 'rgba(0,0,0,1)';
+
+            if (initLoad) {
+                initLoad = false;
+                mapFadeBtn.style.opacity = 1;
+            };
+        });
+        for (let i = 0; i < layerArray.length; i++) {
+            const layerId = 'glacial-retreat-' + layerArray[i];
+
+            setTimeout(() => {
+                map.setPaintProperty(layerId, 'fill-opacity', layerOpacity);
+            }, timer);
+
+            timer = timer + 100;
+        }
+    } else {
+        map.flyTo({
+            center: [-90, 58],
+            zoom: 3.8,
+            bearing: 0,
+            pitch: 0,
+            duration: 5000
+        }).once('moveend', () => {
+            mapFadeBtn.innerHTML = 'Fade in';
+            mapFadeBtn.style.pointerEvents = 'inherit';
+            mapFadeBtn.style.color = 'rgba(0,0,0,1)';
+        });
+        for (let i = layerArray.length - 1; i >= 0; i--) {
+            const layerId = 'glacial-retreat-' + layerArray[i];
+
+            setTimeout(() => {
+                map.setPaintProperty(layerId, 'fill-opacity', layerOpacity);
+            }, timer);
+
+            timer = timer + 100;
+        }
+    }
+}
+</script>
+</body>
+</html>
